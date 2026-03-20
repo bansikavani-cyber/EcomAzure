@@ -1,0 +1,7 @@
+{
+  "environment": { "value": "dev" },
+  "storageAccountName": { "value": "ecomdevstorage" },
+  "sqlServerName": { "value": "ecomdevsql" },
+  "sqlDbName": { "value": "ecomdevdb" },
+  "serviceBusNamespace": { "value": "ecomdevsb" }
+}

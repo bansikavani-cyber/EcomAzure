@@ -1,0 +1,7 @@
+{
+  "environment": { "value": "QA" }, 
+  "storageAccountName": { "value": "ecomqastorage" },
+  "sqlServerName": { "value": "ecomqasql" },
+  "sqlDbName": { "value": "ecomqadb" },
+  "serviceBusNamespace": { "value": "ecomqasb" }
+}

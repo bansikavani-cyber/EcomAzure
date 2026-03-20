@@ -1,0 +1,7 @@
+{
+  "environment": { "value": "PROD" }, 
+  "storageAccountName": { "value": "ecomprodstorage" },
+  "sqlServerName": { "value": "ecomprodsql" },
+  "sqlDbName": { "value": "ecomproddb" },
+  "serviceBusNamespace": { "value": "ecomprodsb" }
+}

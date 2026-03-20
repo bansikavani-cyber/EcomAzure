@@ -1,0 +1,103 @@
+name: Azure Infrastructure Deployment
+
+on:
+  push:
+    branches:
+      - main  # Trigger pipeline when code merges to main
+
+jobs:
+
+  # -------------------------------
+  # Step 1: Deploy DEV automatically
+  # -------------------------------
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set DEV environment variables
+        run: |
+          export RESOURCE_GROUP="ecomazure-rg-dev"
+          export PARAMETERS_FILE="infra/parameters/dev.parameters.json"
+
+      - name: Create DEV Resource Group
+        run: |
+          az group create --name $RESOURCE_GROUP --location eastus
+
+      - name: Deploy DEV Bicep Template
+        run: |
+          az deployment group create \
+            --resource-group $RESOURCE_GROUP \
+            --template-file infra/main.bicep \
+            --parameters @$PARAMETERS_FILE
+
+  # -------------------------------
+  # Step 2: Deploy QA automatically after DEV
+  # -------------------------------
+  deploy-qa:
+    runs-on: ubuntu-latest
+    needs: deploy-dev   # Wait until DEV is done
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set QA environment variables
+        run: |
+          export RESOURCE_GROUP="ecomazure-rg-qa"
+          export PARAMETERS_FILE="infra/parameters/qa.parameters.json"
+
+      - name: Create QA Resource Group
+        run: |
+          az group create --name $RESOURCE_GROUP --location eastus
+
+      - name: Deploy QA Bicep Template
+        run: |
+          az deployment group create \
+            --resource-group $RESOURCE_GROUP \
+            --template-file infra/main.bicep \
+            --parameters @$PARAMETERS_FILE
+
+  # --------------------------------
+  # Step 3: Deploy PROD with manual approval
+  # --------------------------------
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: deploy-qa   # Wait until QA is done
+    environment:
+      name: prod      # This enables manual approval in GitHub Actions
+      url: https://portal.azure.com
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set PROD environment variables
+        run: |
+          export RESOURCE_GROUP="ecomazure-rg-prod"
+          export PARAMETERS_FILE="infra/parameters/prod.parameters.json"
+
+      - name: Create PROD Resource Group
+        run: |
+          az group create --name $RESOURCE_GROUP --location eastus
+
+      - name: Deploy PROD Bicep Template
+        run: |
+          az deployment group create \
+            --resource-group $RESOURCE_GROUP \
+            --template-file infra/main.bicep \
+            --parameters @$PARAMETERS_FILE
