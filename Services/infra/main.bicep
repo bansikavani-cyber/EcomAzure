@@ -1,4 +1,5 @@
 param storageAccountName string
+param environment string
 param location string = resourceGroup().location
 
 resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
@@ -7,9 +8,8 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   sku: { name: 'Standard_LRS' }
   kind: 'StorageV2'
   tags: {
-    environment: 'DEV'  // Optional, you can replace with parameter later
+    environment: environment
   }
-  //comment1
 }
 
 output storageAccountNameOutput string = storage.name
