@@ -1,7 +1,7 @@
 name: AzureInfraDeployment
 
 trigger:
-- main  # Equivalent to 'on: push' in GitHub Actions
+- main  # Runs automatically on main branch
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -32,7 +32,7 @@ stages:
     - task: AzureCLI@2
       displayName: 'Create DEV Resource Group'
       inputs:
-        azureSubscription: 'EcomAzureInfraSub' # Your service connection
+        azureSubscription: 'EcomAzureInfraSub'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
@@ -85,38 +85,39 @@ stages:
             --parameters @$(QAParameters)
 
 # -----------------------
-# Stage 3: PROD (with manual approval)
+# Stage 3: PROD (Manual Approval)
 # -----------------------
 - stage: Deploy_Prod
   displayName: 'Deploy to PROD'
   dependsOn: Deploy_QA
   condition: succeeded()
-  approval:
-    # Optional: define environment approval in Azure DevOps UI
-    - environment: 'prod'
   jobs:
-  - job: Prod
+  - deployment: Prod
     displayName: 'Deploy Bicep to PROD'
-    steps:
-    - checkout: self
+    environment: 'prod'  # Manual approval configured here
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
 
-    - task: AzureCLI@2
-      displayName: 'Create PROD Resource Group'
-      inputs:
-        azureSubscription: 'EcomAzureInfraSub'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az group create --name $(ProdResourceGroup) --location $(LOCATION)
+          - task: AzureCLI@2
+            displayName: 'Create PROD Resource Group'
+            inputs:
+              azureSubscription: 'EcomAzureInfraSub'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az group create --name $(ProdResourceGroup) --location $(LOCATION)
 
-    - task: AzureCLI@2
-      displayName: 'Deploy PROD Bicep'
-      inputs:
-        azureSubscription: 'EcomAzureInfraSub'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az deployment group create \
-            --resource-group $(ProdResourceGroup) \
-            --template-file $(BicepFile) \
-            --parameters @$(ProdParameters)
+          - task: AzureCLI@2
+            displayName: 'Deploy PROD Bicep'
+            inputs:
+              azureSubscription: 'EcomAzureInfraSub'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az deployment group create \
+                  --resource-group $(ProdResourceGroup) \
+                  --template-file $(BicepFile) \
+                  --parameters @$(ProdParameters)
